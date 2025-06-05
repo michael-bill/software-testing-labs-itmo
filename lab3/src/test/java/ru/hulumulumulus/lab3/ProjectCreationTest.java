@@ -8,6 +8,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait; // Added import
 import java.time.Duration;
+import java.util.UUID; // Added import for UUID
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ProjectCreationTest extends FlRuTest {
@@ -64,8 +65,9 @@ public class ProjectCreationTest extends FlRuTest {
         System.out.println("ИНФО: Страница создания проекта загружена.");
 
         // Шаг 5: Заказчик заполняет форму нового проекта
-        String projectTitle = "Тестовый проект для ТПО " + System.currentTimeMillis();
-        String projectDescription = "Это тестовое описание для проекта, созданного в рамках ТПО. Уникальный идентификатор: " + System.currentTimeMillis();
+        String uniqueSuffix = UUID.randomUUID().toString().substring(0, 8); // 8-char unique ID
+        String projectTitle = "Тестовый проект ТПО " + uniqueSuffix;
+        String projectDescription = "Уникальное тестовое описание для ТПО. ID: " + uniqueSuffix + ". Timestamp: " + System.currentTimeMillis();
         String projectBudget = "5000";
 
         WebElement titleInput = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//input[@id='ui-input-title']")));
@@ -125,50 +127,30 @@ public class ProjectCreationTest extends FlRuTest {
         publishProjectFormButton.click();
         System.out.println("ИНФО: Нажата кнопка 'Опубликовать заказ' на форме.");
 
-        // Шаг 6.5: Проверка на сообщение о дублировании задачи или переход на страницу VAS
-        try {
-            // Сначала пытаемся найти заголовок страницы VAS (оригинальный Шаг 7)
-            // Увеличиваем время ожидания для загрузки страницы VAS
-            wait.withTimeout(Duration.ofSeconds(25)).until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//h2[contains(text(), 'Получите больше ответов')]")));
-            System.out.println("ИНФО: Страница VAS загружена.");
-            
-            WebElement forAllCheckbox = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//input[@id='ui-checkbox-forall']")));
-            if (forAllCheckbox.isSelected()) {
-                // Используем JavascriptExecutor для клика, если стандартный не сработает
-                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", forAllCheckbox);
-                System.out.println("ИНФО: Снята галочка 'Открыть заказ для всех'.");
-            } else {
-                System.out.println("ИНФО: Галочка 'Открыть заказ для всех' уже была снята.");
-            }
-
-            WebElement continueButtonVAS = wait.until(ExpectedConditions.elementToBeClickable(
-                By.xpath("//button[contains(@class, 'ui-button') and normalize-space(.)='Продолжить']")
-            ));
-            continueButtonVAS.click();
-            System.out.println("ИНФО: Нажата кнопка 'Продолжить' на странице VAS.");
-
-            // Шаг 8: Проверяем, что заказ создан (название проекта на странице управления)
-            String projectTitleXPath = String.format("//div[@class='text-3' and contains(text(), '%s')]", projectTitle);
-            WebElement projectTitleOnPage = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(projectTitleXPath)));
-            assertTrue(projectTitleOnPage.isDisplayed(), "Заголовок созданного проекта ('" + projectTitle + "') не найден на странице управления.");
-            System.out.println("ИНФО: Проект '" + projectTitle + "' успешно создан и отображается на странице управления.");
-
-        } catch (TimeoutException e) {
-            // Если страница VAS не загрузилась (TimeoutException от wait.withTimeout), проверяем сообщение о дублировании
-            System.out.println("ИНФО: Страница VAS не загрузилась в ожидаемое время. Проверяем наличие сообщения о дублировании задачи. Ошибка ожидания VAS: " + e.getMessage());
-            try {
-                WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(5)); 
-                WebElement duplicateMessage = shortWait.until(ExpectedConditions.visibilityOfElementLocated(
-                    By.xpath("//div[contains(normalize-space(), 'Вы уже размещали эту задачу, и с момента публикации прошло меньше суток')]")
-                ));
-                System.out.println("ИНФО: Обнаружено сообщение о дублировании задачи: '" + duplicateMessage.getText() + "'. Тест считается успешно пройденным на этом этапе.");
-                assertTrue(duplicateMessage.isDisplayed(), "Сообщение о дублировании задачи должно быть видимо.");
-                return; // Завершаем тест успешно, если найдено сообщение о дубликате
-            } catch (TimeoutException e2) {
-                // Если ни страница VAS, ни сообщение о дубликате не найдены, тест должен упасть.
-                System.err.println("ОШИБКА: Не удалось загрузить страницу VAS и не найдено сообщение о дублировании задачи. Ошибка ожидания сообщения о дубликате: " + e2.getMessage());
-                throw e; // Перебрасываем первоначальное исключение от ожидания VAS
-            }
+        // Шаг 7: На странице VAS (доп. услуг) убираем галочку "Открыть заказ для всех" и нажимаем "Продолжить"
+        // Ожидаем загрузку страницы VAS, предполагая, что проект всегда уникален
+        wait.withTimeout(Duration.ofSeconds(25)).until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//h2[contains(text(), 'Получите больше ответов')]")));
+        System.out.println("ИНФО: Страница VAS загружена.");
+        
+        WebElement forAllCheckbox = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//input[@id='ui-checkbox-forall']")));
+        if (forAllCheckbox.isSelected()) {
+            // Используем JavascriptExecutor для клика, если стандартный не сработает
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", forAllCheckbox);
+            System.out.println("ИНФО: Снята галочка 'Открыть заказ для всех'.");
+        } else {
+            System.out.println("ИНФО: Галочка 'Открыть заказ для всех' уже была снята.");
         }
+
+        WebElement continueButtonVAS = wait.until(ExpectedConditions.elementToBeClickable(
+            By.xpath("//button[contains(@class, 'ui-button') and normalize-space(.)='Продолжить']")
+        ));
+        continueButtonVAS.click();
+        System.out.println("ИНФО: Нажата кнопка 'Продолжить' на странице VAS.");
+
+        // Шаг 8: Проверяем, что заказ создан (название проекта на странице управления)
+        String projectTitleXPath = String.format("//div[@class='text-3' and contains(text(), '%s')]", projectTitle);
+        WebElement projectTitleOnPage = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(projectTitleXPath)));
+        assertTrue(projectTitleOnPage.isDisplayed(), "Заголовок созданного проекта ('" + projectTitle + "') не найден на странице управления.");
+        System.out.println("ИНФО: Проект '" + projectTitle + "' успешно создан и отображается на странице управления.");
     }
 }
