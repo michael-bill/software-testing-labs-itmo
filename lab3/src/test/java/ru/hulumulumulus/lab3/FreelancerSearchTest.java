@@ -74,4 +74,67 @@ public class FreelancerSearchTest extends FlRuTest {
         assertTrue(searchResults.size() > 0, "Результаты поиска фрилансеров по специализации '" + specializationToClick + "' не найдены.");
         System.out.println("ИНФО: Найдены фрилансеры (" + searchResults.size() + " на первой странице) по специализации: " + specializationToClick);
     }
+
+    @Test
+    void testSearchFreelancersByName() {
+        // Шаг 1: Посетитель заходит на сайт Fl.ru.
+        driver.get("https://www.fl.ru/");
+        System.out.println("ИНФО: Главная страница Fl.ru открыта.");
+
+        // Попытка закрыть cookie-уведомление, если оно есть
+        try {
+            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(5));
+            String cookieButtonXPath = "//button[normalize-space()='Соглашаюсь с условиями' and contains(@class, 'fl-cookie-button')]";
+            WebElement cookieAcceptButton = shortWait.until(ExpectedConditions.elementToBeClickable(By.xpath(cookieButtonXPath)));
+            cookieAcceptButton.click();
+            System.out.println("ИНФО: Cookie-уведомление 'Соглашаюсь с условиями' было найдено и закрыто.");
+        } catch (TimeoutException e) {
+            System.out.println("ИНФО: Cookie-уведомление 'Соглашаюсь с условиями' не найдено или не удалось закрыть (это может быть нормально).");
+        }
+
+        // Шаг 2: Заказчик переходит в раздел поиска фрилансеров.
+        WebElement searchSpecialistLink = wait.until(ExpectedConditions.elementToBeClickable(
+            By.xpath("//a[contains(@class, 'fl-home-page__header-freellink') and contains(@href, '/freelancers/')]")
+        ));
+        searchSpecialistLink.click();
+        System.out.println("ИНФО: Переход в раздел поиска фрилансеров (/freelancers/).");
+
+        // Ожидание загрузки страницы каталога фрилансеров и доступности поля поиска
+        WebElement searchInput = wait.until(ExpectedConditions.elementToBeClickable(
+            By.xpath("//input[@id='search-request']")
+        ));
+        System.out.println("ИНФО: Страница каталога фрилансеров загружена, поле поиска доступно.");
+
+        // Шаг 3: Заказчик вводит имя "Иван" в поле поиска.
+        String searchName = "Иван";
+        searchInput.clear();
+        searchInput.sendKeys(searchName);
+        System.out.println("ИНФО: В поле поиска введено имя: " + searchName);
+
+        // Шаг 4: Заказчик нажимает кнопку "Найти исполнителя".
+        WebElement findButton = wait.until(ExpectedConditions.elementToBeClickable(
+            By.xpath("//button[@data-id='tpl-form-search-exp' and normalize-space()='Найти исполнителя']")
+        ));
+        findButton.click();
+        System.out.println("ИНФО: Нажата кнопка 'Найти исполнителя'.");
+
+        // Ожидаемый результат: Отображается список фрилансеров.
+        // Проверяем, что поле поиска на странице результатов содержит "Иван"
+        WebElement searchInputAfterSearch = wait.until(ExpectedConditions.visibilityOfElementLocated(
+             By.xpath("//input[@id='search-request']")
+        ));
+        assertTrue(searchInputAfterSearch.getAttribute("value").contains(searchName), 
+            "Поле поиска не содержит '" + searchName + "' после выполнения поиска.");
+        System.out.println("ИНФО: Поле поиска на странице результатов содержит '" + searchName + "'.");
+
+        // Проверяем, что появились результаты поиска
+        wait.until(ExpectedConditions.presenceOfElementLocated(
+            By.xpath("//table[contains(@class, 'catalog-freelancers')]")
+        ));
+        List<WebElement> searchResults = driver.findElements(
+            By.xpath("//table[contains(@class, 'catalog-freelancers')]//tr[contains(@class, 'cf-line')]")
+        );
+        assertTrue(searchResults.size() > 0, "Результаты поиска фрилансеров по имени '" + searchName + "' не найдены.");
+        System.out.println("ИНФО: Найдены фрилансеры (" + searchResults.size() + " на первой странице) по имени: " + searchName);
+    }
 }
