@@ -3,6 +3,7 @@ package ru.hulumulumulus.lab3;
 import java.time.Duration;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.openqa.selenium.By;
@@ -17,6 +18,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Slf4j
 public class FlRuTest {
     protected WebDriver driver;
     protected WebDriverWait wait;
@@ -46,7 +48,7 @@ public class FlRuTest {
     protected void login() {
         driver.get("https://www.fl.ru");
 
-        // Кликаем вход
+        // Нажимаем "Вход"
         WebElement mainLoginButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//a[@data-id=\"qa-head-sign-in\"]")));
         mainLoginButton.click();
 
@@ -62,7 +64,7 @@ public class FlRuTest {
         ));
         passwordField.sendKeys(TEST_PASSWORD);
 
-        // Ждем капчу
+        // Ожидаем и проходим капчу
         WebElement captchaIframe = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//iframe[@data-testid='checkbox-iframe']")));
         driver.switchTo().frame(captchaIframe);
 
@@ -70,13 +72,13 @@ public class FlRuTest {
 
         driver.switchTo().defaultContent();
 
-        // Кликаем войти
+        // Нажимаем "Войти" в модальном окне
         WebElement modalLoginSubmitButton = wait.until(ExpectedConditions.elementToBeClickable(
                 By.xpath("//button[@id='submit-button' and @type='submit' and contains(text(), 'Войти')]")
         ));
         modalLoginSubmitButton.click();
 
-        // Проверяем, что удалось залогиниться
+        // Проверяем успешность входа
         boolean isLoggedIn = false;
         try {
             WebElement loginSuccessIndicator = waitForElementByXpath(driver, LOGIN_SUCCESS_INDICATOR_XPATH);
