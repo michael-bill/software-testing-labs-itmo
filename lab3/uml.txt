@@ -1,0 +1,70 @@
+@startuml
+left to right direction
+
+actor "Посетитель" as Visitor
+actor "Авторизованный пользователь" as AuthUser
+actor "Заказчик" as Client
+actor "Фрилансер" as Freelancer
+
+AuthUser --|> Visitor
+
+rectangle "Система Fl.ru" {
+  usecase "Регистрация как Заказчик" as UC_RegisterClient
+  usecase "Регистрация как Фрилансер" as UC_RegisterFreelancer
+  usecase "Авторизация" as UC_Login
+  usecase "Выход из системы" as UC_Logout
+
+  usecase "Поиск проектов/заказов" as UC_SearchProjects
+  usecase "Просмотр детальной информации о проекте" as UC_ViewProjectDetails
+
+  usecase "Поиск фрилансеров" as UC_SearchFreelancers
+  usecase "Просмотр профиля фрилансера" as UC_ViewFreelancerProfile
+  usecase "Просмотр портфолио в профиле" as UC_ViewPortfolioInProfile
+
+  ' UseCases для Заказчика
+  usecase "Размещение нового проекта" as UC_PostNewProject
+  usecase "Просмотр откликов на свой проект" as UC_ViewMyProjectProposals
+  usecase "Выбор исполнителя для своего проекта" as UC_SelectFreelancer
+
+  ' UseCases для Фрилансера
+  usecase "Подача отклика на проект" as UC_ApplyToProject
+  usecase "Управление своим профилем (включая портфолио)" as UC_ManageMyProfileAndPortfolio
+  usecase "Просмотр своих откликов" as UC_ViewMyApplications
+}
+
+' Связи Посетителя
+Visitor --> UC_SearchProjects
+Visitor --> UC_ViewProjectDetails
+Visitor --> UC_SearchFreelancers
+Visitor --> UC_ViewFreelancerProfile
+Visitor --> UC_RegisterClient
+Visitor --> UC_RegisterFreelancer
+Visitor --> UC_Login
+
+' Наследование и связи Заказчика
+Client --|> AuthUser
+Client --> UC_PostNewProject
+Client --> UC_ViewMyProjectProposals
+Client --> UC_SelectFreelancer
+
+' Наследование и связи Фрилансера
+Freelancer --|> AuthUser
+Freelancer --> UC_ApplyToProject
+Freelancer --> UC_ManageMyProfileAndPortfolio
+Freelancer --> UC_ViewMyApplications
+
+' include
+UC_PostNewProject ..> UC_Login : <<include>>
+UC_ViewMyProjectProposals ..> UC_Login : <<include>>
+UC_SelectFreelancer ..> UC_Login : <<include>>
+
+UC_ApplyToProject ..> UC_Login : <<include>>
+UC_ManageMyProfileAndPortfolio ..> UC_Login : <<include>>
+UC_ViewMyApplications ..> UC_Login : <<include>>
+
+' extend
+UC_ViewPortfolioInProfile ..> UC_ViewFreelancerProfile : <<extend>>
+UC_ViewMyProjectProposals ..> UC_PostNewProject : <<extend>> ' После публикации проекта можно смотреть отклики
+UC_SelectFreelancer ..> UC_ViewMyProjectProposals : <<extend>> ' Выбор из тех, кто откликнулся
+
+@enduml
